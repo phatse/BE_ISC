@@ -4,7 +4,9 @@ const {
   getOrders, 
   getOrder, 
   updateOrderStatus,
-  getMyOrders
+  getMyOrders,
+  deleteOrder,
+  updatePaymentStatus
 } = require('../controllers/orderController');
 const { protect, authorize } = require('../middleware/auth');
 
@@ -22,7 +24,11 @@ router.route('/')
   .get(authorize('admin'), getOrders);
 
 router.route('/:id')
+  .delete(protect, deleteOrder)
   .get(getOrder)
   .put(authorize('admin'), updateOrderStatus);
 
-module.exports = router; 
+// Add new route for payment status update
+router.put('/:id/pay', authorize('admin'), updatePaymentStatus);
+
+module.exports = router;

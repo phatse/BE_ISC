@@ -122,6 +122,35 @@ exports.updateOrderStatus = asyncHandler(async (req, res, next) => {
   });
 });
 
+// @desc    Update order payment status
+// @route   PUT /api/v1/orders/:id/pay
+// @access  Private/Admin
+exports.updatePaymentStatus = asyncHandler(async (req, res, next) => {
+  const order = await Order.findById(req.params.id);
+
+  if (!order) {
+    return next(new ErrorResponse(`Order not found with id of ${req.params.id}`, 404));
+  }
+
+  // Toggle payment status
+  order.isPaid = !order.isPaid;
+  
+  // Update paidAt timestamp only when marking as paid
+  if (order.isPaid) {
+    order.paidAt = Date.now();
+  } else {
+    order.paidAt = null;
+  }
+  
+  await order.save();
+
+  res.status(200).json({
+    success: true,
+    data: order,
+    message: `Order marked as ${order.isPaid ? 'paid' : 'unpaid'}`
+  });
+});
+
 // @desc    Get logged in user orders
 // @route   GET /api/v1/orders/myorders
 // @access  Private
@@ -134,3 +163,31 @@ exports.getMyOrders = asyncHandler(async (req, res, next) => {
     data: orders
   });
 }); 
+
+// @desc    Delete order
+// @route   DELETE /api/v1/orders/:id
+// @access  Private/Admin
+exports.deleteOrder = asyncHandler(async (req, res, next) => {
+  const order = await Order.findById(req.params.id);
+
+  if (!order) {
+    return next(new ErrorResponse(`Order not found with id of ${req.params.id}`, 404));
+  }
+
+  // Make sure user is order owner or admin
+  if (order.user.toString() !== req.user.id && req.user.role !== 'admin') {
+    return next(new ErrorResponse('Not authorized to delete this order', 401));
+  }
+
+  // Check if order can be deleted (e.g., not already shipped)
+  if (order.status === 'shipped' || order.status === 'delivered') {
+    return next(new ErrorResponse('Cannot delete order that has been shipped or delivered', 400));
+  }
+
+  await order.deleteOne();
+
+  res.status(200).json({
+    success: true,
+    data: {}
+  });
+});
