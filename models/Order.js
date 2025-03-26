@@ -62,7 +62,7 @@ const OrderSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['COD', 'banking'],
+    enum: ['COD', 'banking', 'payos'],
     required: true
   },
   isPaid: {
@@ -70,6 +70,22 @@ const OrderSchema = new mongoose.Schema({
     default: false
   },
   paidAt: Date,
+  // PayOS related fields
+  paymentLinkId: {
+    type: String,
+  },
+  paymentLinkCode: {
+    type: String,
+  },
+  checkoutUrl: {
+    type: String,
+  },
+  qrCode: {
+    type: String,
+  },
+  transactionInfo: {
+    type: Object,
+  },
   createdAt: {
     type: Date,
     default: Date.now
